@@ -352,7 +352,7 @@ __interrupt void Port1_ISR() {
 #pragma vector = TIMER0_A0_VECTOR
 __interrupt void T0A0_ISR() {
     seconds++;
-    if (seconds == 6){
+    if (seconds == 60){
         seconds = 0;
         minutes++;
 
