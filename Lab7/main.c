@@ -322,8 +322,14 @@ __interrupt void Port1_ISR() {
             uart_write_string(newline);
         }
         else {
-            hours = timeDigits[0]*10 + timeDigits[1];
-            minutes = timeDigits[2]*10 + timeDigits[3];
+            if (currentIndex == 3){
+                hours = timeDigits[0];
+                minutes = timeDigits[1] * 10 + timeDigits[2];
+            }
+            else {
+                hours = timeDigits[0] * 10 + timeDigits[1];
+                minutes = timeDigits[2] * 10 + timeDigits[3];
+            }
 
             uart_write_string(timeSet);
             printTime();
@@ -352,7 +358,7 @@ __interrupt void Port1_ISR() {
 #pragma vector = TIMER0_A0_VECTOR
 __interrupt void T0A0_ISR() {
     seconds++;
-    if (seconds == 60){
+    if (seconds == 6){
         seconds = 0;
         minutes++;
 
@@ -366,15 +372,20 @@ __interrupt void T0A0_ISR() {
 
         printTime();
         unsigned int data;
+        int benchOverflow = 0
         i2c_read_word(0b1000100, 0x00, &data);
         data = data * 1.28;
         uart_write_uint16(data);
+        if (bench < bench - 10) benchOverflow = -1;
+        else if (bench > bench + 10) benchOverflow = 1;
         if (data > bench + 10){
-            bench = data;
+            if (benchOverflow = 1) bench = 65535;
+            else bench = data;
             uart_write_string(up);
         }
         if (data < bench - 10){
-             bench = data;
+            if (benchOverflow = -1) bench = 0;
+            else bench = data;
              uart_write_string(down);
        }
        uart_write_string(newline);
