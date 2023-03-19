@@ -9,8 +9,6 @@
 
 unsigned int ascii[10] = {48, 49, 50, 51, 52, 53, 54, 55, 56, 57};
 
-/* TODO: FIX NEGATIVE ROLLOVER INTEGERS */
-
 void Initialize_UART();
 void uart_write_char(unsigned char ch);
 unsigned char uart_read_char();
@@ -83,6 +81,7 @@ int main(void)
     uart_write_string(header);
     uart_write_string(newline);
 
+    //First measurement
     unsigned int data;
     i2c_read_word(0b1000100, 0x00, &data);
     data = data * 1.28;
@@ -91,6 +90,7 @@ int main(void)
     uart_write_uint16(data);
     uart_write_string(newline);
 
+    //Infinite loop. Can be LPM
     while(1){}
 }
 
@@ -295,15 +295,18 @@ while ( (UCB1CTLW0 & UCTXSTP) != 0) {}
 return 0;
 }
 
+/////////////////////////////////////////////////////////////
+
 #pragma vector = PORT1_VECTOR
 __interrupt void Port1_ISR() {
     //Detect button1
     if((P1IFG & BUT1) == BUT1){
-        _delay_cycles (100000);
+        _delay_cycles (100000); //Debounce
 
         unsigned char data;
         unsigned char input;
         int currentIndex = 0;
+        //Array for parsing input
         unsigned int timeDigits[4] = {0,0,0,0}; //Hours: X0, X1 // Minutes: X2, X3
 
         uart_write_string(prompt);
@@ -313,21 +316,22 @@ __interrupt void Port1_ISR() {
             input = uart_read_char(); //Read input
             if (input != 0){
                 data = input; //If input was not null, set data <Allows for null uses>
+                //It data is placeable in index and is a ASCII number, save as actual number value
                 if (data != 0 && data != 13 && data > 47 && data < 58 && currentIndex < 5) timeDigits[currentIndex] = data - 48;
                 currentIndex++;
             }
-        } while (data != '\r');
+        } while (data != '\r');  //End entry upon 'enter' key
         if (currentIndex < 3){
-            uart_write_string(timeFail);
+            uart_write_string(timeFail); //Do not save input
             uart_write_string(newline);
         }
-        else {
+        else {  //Save input
             if (currentIndex == 3){
-                hours = timeDigits[0];
+                hours = timeDigits[0];  //Entered hour is only one number
                 minutes = timeDigits[1] * 10 + timeDigits[2];
             }
             else {
-                hours = timeDigits[0] * 10 + timeDigits[1];
+                hours = timeDigits[0] * 10 + timeDigits[1]; //Entered hour is two numbers
                 minutes = timeDigits[2] * 10 + timeDigits[3];
             }
 
@@ -341,8 +345,9 @@ __interrupt void Port1_ISR() {
     }
     //Detect button2
     if((P1IFG & BUT2) == BUT2){
-        _delay_cycles (100000);
-
+        _delay_cycles (100000); //Debounce
+        
+        //Print current reading
         unsigned int data;
         i2c_read_word(0b1000100, 0x00, &data);
         data = data * 1.28;
@@ -358,35 +363,37 @@ __interrupt void Port1_ISR() {
 #pragma vector = TIMER0_A0_VECTOR
 __interrupt void T0A0_ISR() {
     seconds++;
-    if (seconds == 6){
+    if (seconds == 60){ //Count to 60 seconds
         seconds = 0;
         minutes++;
 
-        if (minutes == 60){
+        if (minutes == 60){ //Count to one hour
             minutes = 0;
             hours++;
         }
-        if (hours == 24){
+        if (hours == 24){   //Count to one day
             hours = 0;
         }
 
-        printTime();
+        printTime();    //Print current hour and minute measurement
         unsigned int data;
-        int benchOverflow = 0
+        int benchOverflow = 0   //Overflow handler
         i2c_read_word(0b1000100, 0x00, &data);
         data = data * 1.28;
         uart_write_uint16(data);
-        if (bench < bench - 10) benchOverflow = -1;
-        else if (bench > bench + 10) benchOverflow = 1;
-        if (data > bench + 10){
+
+        if (bench < bench - 10) benchOverflow = -1; //Underflow occurred
+        else if (bench > bench + 10) benchOverflow = 1; //Overflow occurred
+
+        if (data > bench + 10){     //If data is greater than threshold
             if (benchOverflow = 1) bench = 65535;
-            else bench = data;
-            uart_write_string(up);
+            else bench = data;  //New benchmark is set
+            uart_write_string(up); 
         }
-        if (data < bench - 10){
+        else if (data < bench - 10){    //If data is less than threshold
             if (benchOverflow = -1) bench = 0;
-            else bench = data;
-             uart_write_string(down);
+            else bench = data;  //New benchmark is set
+            uart_write_string(down);
        }
        uart_write_string(newline);
     }
