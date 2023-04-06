@@ -236,11 +236,6 @@ void main(void) {
     rect2.yMax = 76;
     rect2.yMin = 70;
 
-    rect_optCounterOutline.xMax = 116;
-    rect_optCounterOutline.xMin = 12;
-    rect_optCounterOutline.yMax = 115;
-    rect_optCounterOutline.yMin = 100;
-
     //Clear the screen
     Graphics_clearDisplay(&g_sContext);
 
@@ -259,8 +254,8 @@ void main(void) {
     //******* END 9.1 *******
 
     //******* 9.2 *********
-    //Graphics_clearDisplay(&g_sContext);
-    //Graphics_drawImage(&g_sContext, &UCF_Logo, 0, 0);
+    Graphics_clearDisplay(&g_sContext);
+    Graphics_drawImage(&g_sContext, &UCF_Logo, 0, 0);
 
     //******* END 9.2 *******
 
@@ -321,5 +316,6 @@ __interrupt void Port1_ISR() {
         P1IFG &=  ~(BUT1);
     }
 
-}*/
+}
 
+*/
