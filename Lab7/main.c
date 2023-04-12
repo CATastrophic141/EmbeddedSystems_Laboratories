@@ -377,7 +377,7 @@ __interrupt void T0A0_ISR() {
 
         printTime();    //Print current hour and minute measurement
         unsigned int data;
-        int benchOverflow = 0   //Overflow handler
+        int benchOverflow = 0;   //Overflow handler
         i2c_read_word(0b1000100, 0x00, &data);
         data = data * 1.28;
         uart_write_uint16(data);
