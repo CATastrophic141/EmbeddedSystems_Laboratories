@@ -375,6 +375,15 @@ int main(void)
                  flag = 0;
                  input = 0;
         }
+
+        else if (changeInput == 45) {
+            secondsInStage0 = 0;
+            secondsInStage1 = 0;
+            secondsInStage2 = 0;
+            uart_write_string("Cleared stage time recordings");
+            uart_write_string(newline);
+        }
+
         changeInput = 0;
         isEditing = 0;
     }
